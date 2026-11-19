@@ -3,7 +3,7 @@
 Connect **Claude Desktop, Cursor, Windsurf, or n8n AI Agents** to 4 live US federal public-record & B2B domain intelligence engines in **15 seconds** — with **$0 proxy costs**, **256 MB RAM footprint**, and transparent Pay-Per-Event pricing (`$3.50–$4.50 / 1,000 verified records`).
 
 [![PipeForge on Apify](https://img.shields.io/badge/Apify_Store-PipeForge_(4_Live_Actors)-00C853?style=for-the-badge)](https://apify.com/pipeforge)
-[![MCP Compatible](https://img.shields.io/badge/MCP_Server-1_Click_Endpoint-2962FF?style=for-the-badge)](#1-click-mcp-server-setup)
+[![Glama MCP Connector](https://glama.ai/mcp/connectors/com.apify.mcp/pipe-forge-us-b2b-federal-and-domain-signal-engine/badges/score.svg)](https://glama.ai/mcp/connectors/com.apify.mcp/pipe-forge-us-b2b-federal-and-domain-signal-engine)
 [![Clay & n8n Ready](https://img.shields.io/badge/Clay_&_n8n-Copy_Paste_Recipes-FF6D00?style=for-the-badge)](./clay/clay_http_api_recipes.md)
 
 ---
