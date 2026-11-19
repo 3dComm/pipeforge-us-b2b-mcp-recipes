@@ -1,0 +1,168 @@
+{
+  "name": "ATS Hiring-Intent (Greenhouse/Lever/Ashby) Chained to Zero-Browser DNS/DMARC/SSL Audit",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Dual-Hook B2B Intent: ATS Hiring Trigger -> Live Domain DMARC/SSL Audit\nChains two zero-proxy PipeForge Apify Actors:\n1. **US ATS Hiring-Intent Engine (`$4.00/1K`)** — Scans live Greenhouse, Lever, and Ashby boards for companies hiring `SOC 2`, `CISO`, `Security Engineer`, or `RevOps`.\n2. **B2B Domain DNS/DMARC/SSL Trigger (`$3.50/1K`)** — Automatically audits the hiring companies' domains via Google DoH + TLS port 443 for `p=none` DMARC, Proofpoint/Mimecast SEGs, and expiring SSL certs.",
+        "height": 260,
+        "width": 560,
+        "color": 4
+      },
+      "id": "ats-note-overview-b1c2",
+      "name": "Sticky Note - Workflow Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [140, 60]
+    },
+    {
+      "parameters": {
+        "content": "### 60-Second Setup (Header Auth)\n1. Create a **Header Auth** credential (`Authorization: Bearer YOUR_APIFY_API_TOKEN`).\n2. Attach it to both PipeForge HTTP Request nodes.\n3. Replace `YOUR_GOOGLE_SHEET_ID` and `YOUR_SLACK_CHANNEL_ID`.",
+        "height": 220,
+        "width": 440,
+        "color": 5
+      },
+      "id": "ats-note-setup-d3e4",
+      "name": "Sticky Note - Setup Instructions",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [740, 60]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "ats-node-trigger-f5a6",
+      "name": "Weekday 9AM EST Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [140, 440]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/pipeforge~us-ats-hiring-intent-sales-triggers/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"platforms\": [\"greenhouse\", \"lever\", \"ashby\"],\n  \"intentCategories\": [\"SECURITY_COMPLIANCE_URGENCY\", \"REVOPS_GTM_STACK_BUYER\"],\n  \"maxPostingAgeDays\": 30,\n  \"maxCompanies\": 20,\n  \"limit\": 30\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "ats-node-fetch-b7c8",
+      "name": "Fetch ATS Hiring-Intent Roles",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [400, 440]
+    },
+    {
+      "parameters": {
+        "jsCode": "const domains = new Set();\nfor (const item of $input.all()) {\n  const slug = String(item.json?.company_slug || '').toLowerCase().replace(/[^a-z0-9]/g, '');\n  if (slug) domains.add(`${slug}.com`);\n}\nreturn [{ json: { domains: Array.from(domains).slice(0, 25), maxConcurrency: 5, timeoutSeconds: 6, minSeverityScore: 0 } }];"
+      },
+      "id": "ats-node-domains-d9e1",
+      "name": "Build Unique Hiring Domains Batch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 440]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/pipeforge~b2b-domain-tech-stack-dns-ssl-sales-trigger/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "ats-node-dns-f2a3",
+      "name": "Audit Domains via Google DoH & TLS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [920, 440]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "ATS_Domain_Intent",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "domain": "={{ $json.domain }}",
+            "mx_provider": "={{ $json.mx_provider }}",
+            "dmarc_policy": "={{ $json.dmarc_policy }}",
+            "ssl_days_remaining": "={{ $json.ssl_days_remaining }}",
+            "severity_score": "={{ $json.severity_score }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "ats-node-sheets-b4c5",
+      "name": "Log Enriched Accounts to Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1180, 440]
+    }
+  ],
+  "connections": {
+    "Weekday 9AM EST Trigger": {
+      "main": [[{ "node": "Fetch ATS Hiring-Intent Roles", "type": "main", "index": 0 }]]
+    },
+    "Fetch ATS Hiring-Intent Roles": {
+      "main": [[{ "node": "Build Unique Hiring Domains Batch", "type": "main", "index": 0 }]]
+    },
+    "Build Unique Hiring Domains Batch": {
+      "main": [[{ "node": "Audit Domains via Google DoH & TLS", "type": "main", "index": 0 }]]
+    },
+    "Audit Domains via Google DoH & TLS": {
+      "main": [[{ "node": "Log Enriched Accounts to Sheets", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "versionId": "c3e9a5b7-2d4f-4a8e-9b1c-6f3d8e2a7b4c",
+  "meta": { "templateCredsSetupCompleted": false },
+  "tags": [
+    { "name": "ATS-Hiring-Intent" },
+    { "name": "DMARC-Audit" },
+    { "name": "Apify" }
+  ]
+}

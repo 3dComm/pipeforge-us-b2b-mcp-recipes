@@ -1,0 +1,205 @@
+{
+  "name": "Dual-Signal US B2B Radar: Expiring Federal GovCon Contracts + $1M+ SEC Form D Startups to Slack & Sheets",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Dual-Signal US Federal GovCon & SEC Form D Startup Radar\nRuns two zero-proxy PipeForge Apify Actors in parallel every weekday morning:\n1. **USAspending.gov Expiring Incumbents (`$4.50/1K`)** — `$500K+` prime federal IT/cyber contracts expiring in `30-180` days with `100%` Recipient UEI & NAICS.\n2. **SEC EDGAR Form D Operating Startups (`$4.50/1K`)** — Fresh `$1M+` equity rounds (investment funds/REITs stripped) with CEO direct US phone.\n\nMerges both live feeds into a unified Google Sheet + instant Slack executive alert.",
+        "height": 260,
+        "width": 560,
+        "color": 4
+      },
+      "id": "gov-note-overview-a1b2",
+      "name": "Sticky Note - Workflow Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [140, 60]
+    },
+    {
+      "parameters": {
+        "content": "### 60-Second Setup (Header Auth)\n1. Create a **Header Auth** credential in n8n:\n   - Header Name: `Authorization`\n   - Value: `Bearer YOUR_APIFY_API_TOKEN`\n2. Attach it to both **Fetch Expiring GovCon Contracts** and **Fetch Live SEC Form D Startups**.\n3. Replace `YOUR_GOOGLE_SHEET_ID` and `YOUR_SLACK_CHANNEL_ID`.",
+        "height": 240,
+        "width": 440,
+        "color": 5
+      },
+      "id": "gov-note-setup-c3d4",
+      "name": "Sticky Note - Setup Instructions",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [740, 60]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "gov-node-trigger-e5f6",
+      "name": "Weekday 8AM EST Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [160, 440]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/pipeforge~us-federal-contract-awards-expiring-incumbents/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"mode\": \"expiring_incumbents\",\n  \"minAwardAmount\": 500000,\n  \"naicsPrefixes\": [\"54\", \"51\"],\n  \"minDaysUntilExpiry\": 30,\n  \"maxDaysUntilExpiry\": 180,\n  \"maxPages\": 5,\n  \"limit\": 25\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "gov-node-usaspending-a7b8",
+      "name": "Fetch Expiring GovCon Contracts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 340]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/pipeforge~us-sec-form-d-startup-funding-leads/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"limit\": 20,\n  \"lookbackDays\": 14,\n  \"minAmountSoldUsd\": 1000000,\n  \"excludeFundsAndRealEstate\": true,\n  \"maxXmlScans\": 100\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "gov-node-secformd-c9d1",
+      "name": "Fetch Live SEC Form D Startups",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 540]
+    },
+    {
+      "parameters": {
+        "jsCode": "const out = [];\nfor (const item of $input.all()) {\n  const d = item.json || {};\n  if (d.recipient_uei) {\n    out.push({\n      json: {\n        signal_source: 'USASPENDING_GOVCON',\n        entity_name: d.recipient_name || '',\n        identifier: d.recipient_uei || '',\n        usd_value: Number(d.award_amount_usd || 0),\n        urgency_note: `Expires in ${d.days_until_expiration}d (${d.end_date}) | NAICS ${d.naics_code}`,\n        contact_or_agency: d.awarding_agency || '',\n        reference_url: d.usaspending_award_url || ''\n      }\n    });\n  } else if (d.entity_name) {\n    out.push({\n      json: {\n        signal_source: 'SEC_FORM_D',\n        entity_name: d.entity_name || '',\n        identifier: d.phone_formatted || '',\n        usd_value: Number(d.total_amount_sold_usd || 0),\n        urgency_note: `Filed ${d.filing_date} | ${d.executive_name || ''}`,\n        contact_or_agency: `${d.city || ''}, ${d.state || ''}`,\n        reference_url: d.sec_xml_url || ''\n      }\n    });\n  }\n}\nreturn out;"
+      },
+      "id": "gov-node-normalize-e2f3",
+      "name": "Normalize Dual Signal Feed",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 440]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "YOUR_SLACK_CHANNEL_ID",
+          "mode": "id"
+        },
+        "text": "=*{{ $json.signal_source }}* — *{{ $json.entity_name }}*\nValue: `${{ $json.usd_value }}` | Key: `{{ $json.identifier }}`\nSignal: {{ $json.urgency_note }}\nContext: {{ $json.contact_or_agency }}\nSource: {{ $json.reference_url }}",
+        "otherOptions": {}
+      },
+      "id": "gov-node-slack-a4b5",
+      "name": "Post Deal Radar to Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1000, 340]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "PipeForge_Deal_Radar",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "signal_source": "={{ $json.signal_source }}",
+            "entity_name": "={{ $json.entity_name }}",
+            "identifier": "={{ $json.identifier }}",
+            "usd_value": "={{ $json.usd_value }}",
+            "urgency_note": "={{ $json.urgency_note }}",
+            "contact_or_agency": "={{ $json.contact_or_agency }}",
+            "reference_url": "={{ $json.reference_url }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "gov-node-sheets-c6d7",
+      "name": "Log Deal Radar to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1000, 540]
+    }
+  ],
+  "connections": {
+    "Weekday 8AM EST Trigger": {
+      "main": [
+        [
+          { "node": "Fetch Expiring GovCon Contracts", "type": "main", "index": 0 },
+          { "node": "Fetch Live SEC Form D Startups", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Fetch Expiring GovCon Contracts": {
+      "main": [
+        [
+          { "node": "Normalize Dual Signal Feed", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Fetch Live SEC Form D Startups": {
+      "main": [
+        [
+          { "node": "Normalize Dual Signal Feed", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Normalize Dual Signal Feed": {
+      "main": [
+        [
+          { "node": "Post Deal Radar to Slack", "type": "main", "index": 0 },
+          { "node": "Log Deal Radar to Google Sheets", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "versionId": "f4a8d2c1-7e3b-4c9a-8b2d-5e1f9a3c6d8b",
+  "meta": { "templateCredsSetupCompleted": false },
+  "tags": [
+    { "name": "USAspending" },
+    { "name": "SEC-Form-D" },
+    { "name": "Apify" }
+  ]
+}
