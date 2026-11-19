@@ -63,6 +63,26 @@ See [`configs/cursor_mcp.json`](./configs/cursor_mcp.json) for native streamable
 
 ---
 
+## Live Sample Outputs (Privacy-Masked Previews)
+
+Inspect real structured schemas pulled directly from live US federal endpoints (last 4 phone digits masked as `XXXX` in this public repo — run any Apify Actor below for live unmasked phone numbers):
+
+- **[SEC Form D Newly Funded Operating Startups (15-row CSV)](./sample_outputs/sec_form_d_sample_masked.csv)** — Real operating startups after filtering out ~76% Pooled Investment Funds/REITs/SPVs.
+- **[CMS NPI-2 Texas Newly Opened Dental Clinic Owners (15-row CSV)](./sample_outputs/cms_npi2_dental_tx_sample_masked.csv)** — Newest-first corporate clinics deduplicated by Authorized Official direct phone.
+
+## 1-Click Ready-to-Run Apify Tasks
+
+- [US $1M+ Newly Funded Startups & CEO Phone (SEC Form D)](https://apify.com/pipeforge/us-sec-form-d-startup-funding-leads/examples/us-1m-newly-funded-startups-ceo-phone-sec-form-d)
+- [Texas Newly Opened Dental Clinic Owners Phone (NPI-2)](https://apify.com/pipeforge/us-cms-npi2-clinic-owner-phone-leads/examples/texas-newly-opened-dental-clinic-owners-phone-npi-2)
+- [Florida & California Dermatology & Chiropractor Owners](https://apify.com/pipeforge/us-cms-npi2-clinic-owner-phone-leads/examples/florida-california-dermatology-chiropractor-owners)
+- [US FMCSA Critical $0 BIPD Trucking Insurance Gap Leads](https://apify.com/pipeforge/us-socrata-b2b-signal-crossjoin-engine/examples/us-fmcsa-critical-0-bipd-trucking-leads)
+- [Austin & NYC $75K+ Commercial GC Building Permits](https://apify.com/pipeforge/us-socrata-b2b-signal-crossjoin-engine/examples/austin-nyc-75k-commercial-gc-building-permits)
+- [Colorado & Texas New LLC & Sales Tax Direct Owners](https://apify.com/pipeforge/us-socrata-b2b-signal-crossjoin-engine/examples/colorado-texas-new-llc-sales-tax-direct-owners)
+- [B2B Cold Email MX / Proofpoint SEG & DMARC Audit](https://apify.com/pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger/examples/b2b-cold-email-mx-proofpoint-seg-dmarc-audit)
+- [MSP Cybersecurity DMARC Spoofing & SSL Expiry Audit](https://apify.com/pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger/examples/msp-cybersecurity-dmarc-spoofing-ssl-expiry-audit)
+
+---
+
 ## Included Automation Recipes
 
 - **Clay.com HTTP API Columns (30-Second Setup):** [`clay/clay_http_api_recipes.md`](./clay/clay_http_api_recipes.md)

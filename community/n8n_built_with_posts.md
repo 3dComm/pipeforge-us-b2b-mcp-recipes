@@ -9,7 +9,7 @@
 > I put together a lightweight 6-node n8n workflow (using Header Auth + Schedule Trigger + IF routing) that pulls live SEC EDGAR primary XML Form D filings, excludes funds/REITs/LPs automatically, and only pings Slack when an operating startup sells `$1M+` with an executive name and direct US phone number on the filing. Lower raises still log quietly into Google Sheets.
 >
 > Full workflow JSON (`sec_form_d_funded_startups_slack_sheets.json`) + 5 other federal US signal workflows (FMCSA insurance gaps, CMS NPI-2 clinic owners, DMARC/SSL domain audits) are free to import here:
-> `https://github.com/pipeforge/pipeforge-us-b2b-mcp-recipes` (and live on Apify at `https://apify.com/pipeforge`).
+> `https://github.com/3dComm/pipeforge-us-b2b-mcp-recipes` (and live on Apify at `https://apify.com/pipeforge`).
 >
 > Happy to share the XML parsing logic or `IF` routing setup if anyone wants to adapt it for specific US states or verticals!
 
@@ -29,5 +29,5 @@
 
 ## 3. Awesome-MCP Servers PR Line (1-Line Contribution Format)
 ```markdown
-- [PipeForge US B2B Federal & Domain Signal MCP](https://github.com/pipeforge/pipeforge-us-b2b-mcp-recipes) - Zero-proxy hosted MCP bundle exposing 4 live US B2B data tools (SEC Form D funded startups, CMS NPI-2 clinic owners, FMCSA DOT insurance gaps & permits, and DoH SPF/DMARC/SSL domain triggers).
+- [PipeForge US B2B Federal & Domain Signal MCP](https://github.com/3dComm/pipeforge-us-b2b-mcp-recipes) - Zero-proxy hosted MCP bundle exposing 4 live US B2B data tools (SEC Form D funded startups, CMS NPI-2 clinic owners, FMCSA DOT insurance gaps & permits, and DoH SPF/DMARC/SSL domain triggers).
 ```
