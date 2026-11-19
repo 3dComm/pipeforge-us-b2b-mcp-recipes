@@ -26,7 +26,7 @@ Most B2B scrapers burn residential proxies, break when DOM selectors change, or 
 All 4 engines are exposed through a single hosted Apify MCP endpoint:
 
 ```text
-https://mcp.apify.com/?actors=pipeforge/us-socrata-b2b-signal-crossjoin-engine,pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger,pipeforge/us-sec-form-d-startup-funding-leads,pipeforge/us-cms-npi2-clinic-owner-phone-leads
+https://mcp.apify.com/?tools=pipeforge/us-socrata-b2b-signal-crossjoin-engine,pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger,pipeforge/us-sec-form-d-startup-funding-leads,pipeforge/us-cms-npi2-clinic-owner-phone-leads
 ```
 
 ### Claude Desktop (`claude_desktop_config.json`)
@@ -40,7 +40,7 @@ Copy [`configs/claude_desktop_config.json`](./configs/claude_desktop_config.json
       "args": [
         "-y",
         "mcp-remote",
-        "https://mcp.apify.com/?actors=pipeforge/us-socrata-b2b-signal-crossjoin-engine,pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger,pipeforge/us-sec-form-d-startup-funding-leads,pipeforge/us-cms-npi2-clinic-owner-phone-leads",
+        "https://mcp.apify.com/?tools=pipeforge/us-socrata-b2b-signal-crossjoin-engine,pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger,pipeforge/us-sec-form-d-startup-funding-leads,pipeforge/us-cms-npi2-clinic-owner-phone-leads",
         "--header",
         "Authorization: Bearer YOUR_APIFY_API_TOKEN"
       ]
