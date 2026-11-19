@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "pipeforge-us-b2b": {
+      "url": "https://mcp.apify.com/?actors=pipeforge/us-socrata-b2b-signal-crossjoin-engine,pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger,pipeforge/us-sec-form-d-startup-funding-leads,pipeforge/us-cms-npi2-clinic-owner-phone-leads",
+      "headers": {
+        "Authorization": "Bearer YOUR_APIFY_API_TOKEN"
+      }
+    }
+  }
+}

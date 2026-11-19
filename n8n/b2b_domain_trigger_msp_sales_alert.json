@@ -1,0 +1,287 @@
+{
+  "name": "Automated B2B Domain Tech-Stack, SPF/DMARC/MX & SSL Sales Trigger Scanner (Apify -> Slack + Google Sheets)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🛡️ Zero-Browser B2B Domain Sales Trigger Pipeline (MSP + Cold Email + E-com Agencies)\n**What this workflow automates:**\nInstead of paying `$5+/1K` for slow headless browser tech-stack scrapers that miss email security posture, this workflow reads prospect domains from **Google Sheets**, batches them into the **B2B Domain Tech-Stack, SPF/DMARC/MX & SSL Sales Trigger Engine** Apify Actor (`$3.50 / 1,000 domains` PPE, `$0` proxy cost), and splits results automatically:\n- **Cold Email Routing:** Identifies `Google Workspace`, `Microsoft 365`, and Enterprise SEGs (`Proofpoint`, `Mimecast`, `Cloudflare Area 1`, `Null MX`).\n- **MSP & Cybersecurity Triggers:** Flags missing/weak `DMARC` (`p=none` / `missing`), weak `SPF`, missing `HSTS/CSP`, or expiring `SSL` certificates (`severity_score >= 40`).\n- **Agency Icebreakers:** Outputs ready-to-merge `msp_security_hook` and `ecom_agency_hook` strings.\n\n### ⚙️ 60-Second Setup (Reviewer-Safe Header Auth)\n1. Connect your **Google Sheets** account in nodes **2** and **6** (Sheet tab `Prospect_Domains` with a `domain` column).\n2. Create an n8n **Header Auth** credential: Header Name = `Authorization`, Value = `Bearer YOUR_APIFY_API_TOKEN`, and attach it to node **4. Run Apify Domain Trigger Engine**.\n3. Connect **Slack** in node **5B** to receive real-time alerts whenever a domain hits `severity_score >= 40`.",
+        "height": 380,
+        "width": 680,
+        "color": 6
+      },
+      "id": "d303c003-3333-4333-8333-000000000001",
+      "name": "Sticky Note - Setup & Architecture",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        140,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "d303c003-3333-4333-8333-000000000002",
+      "name": "1. Weekday 8AM Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        160,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Prospect_Domains",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "d303c003-3333-4333-8333-000000000003",
+      "name": "2. Read Prospect Domains from Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        380,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const domains = $input.all()\n  .map(item => String(item.json.domain || '').trim().toLowerCase())\n  .filter(d => d.length > 3);\n\nconst uniqueDomains = [...new Set(domains)];\nreturn [{ json: { domains: uniqueDomains.length ? uniqueDomains : ['shopify.com', 'hubspot.com', 'stripe.com'] } }];"
+      },
+      "id": "d303c003-3333-4333-8333-000000000004",
+      "name": "3. Batch Deduplicated Domains",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/pipeforge~b2b-domain-tech-stack-dns-ssl-sales-trigger/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ domains: $json.domains, maxConcurrency: 5, timeoutSeconds: 6, minSeverityScore: 0 }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "d303c003-3333-4333-8333-000000000005",
+      "name": "4. Run Apify Domain Trigger Engine",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        820,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-high-severity",
+              "leftValue": "={{ Number($json.severity_score || 0) }}",
+              "rightValue": 40,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d303c003-3333-4333-8333-000000000006",
+      "name": "5. IF High-Priority Trigger (Score >= 40)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "YOUR_SLACK_CHANNEL_ID",
+          "mode": "id"
+        },
+        "text": "=:shield: *HIGH-INTENT B2B DOMAIN TRIGGER DETECTED*\n*Domain:* `{{ $json.domain }}` | *Severity Score:* `{{ $json.severity_score }}/100`\n*MX / Gateway:* {{ $json.cold_email_mx_provider }} (Enterprise SEG: `{{ $json.has_enterprise_seg }}`)\n*SPF:* `{{ $json.spf_strictness }}` | *DMARC:* `{{ $json.dmarc_policy }}` | *SSL Days Left:* `{{ $json.ssl_days_remaining }}`\n*Detected Stack:* {{ $json.detected_tech_stack }}\n*MSP Hook:* {{ $json.msp_security_hook }}\n*Agency Hook:* {{ $json.ecom_agency_hook }}",
+        "otherOptions": {}
+      },
+      "id": "d303c003-3333-4333-8333-000000000007",
+      "name": "5B. Slack Alert: High-Intent Domain",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        1300,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Enriched_Domain_Triggers",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "domain": "={{ $json.domain }}",
+            "severity_score": "={{ $json.severity_score }}",
+            "mx_provider": "={{ $json.mx_provider }}",
+            "has_enterprise_seg": "={{ $json.has_enterprise_seg }}",
+            "spf_strictness": "={{ $json.spf_strictness }}",
+            "dmarc_policy": "={{ $json.dmarc_policy }}",
+            "ssl_days_remaining": "={{ $json.ssl_days_remaining }}",
+            "detected_tech_stack": "={{ $json.detected_tech_stack }}",
+            "msp_security_hook": "={{ $json.msp_security_hook }}",
+            "ecom_agency_hook": "={{ $json.ecom_agency_hook }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "d303c003-3333-4333-8333-000000000008",
+      "name": "6. Log All Enriched Domains to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1300,
+        600
+      ]
+    }
+  ],
+  "connections": {
+    "1. Weekday 8AM Trigger": {
+      "main": [
+        [
+          {
+            "node": "2. Read Prospect Domains from Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Read Prospect Domains from Sheets": {
+      "main": [
+        [
+          {
+            "node": "3. Batch Deduplicated Domains",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Batch Deduplicated Domains": {
+      "main": [
+        [
+          {
+            "node": "4. Run Apify Domain Trigger Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Run Apify Domain Trigger Engine": {
+      "main": [
+        [
+          {
+            "node": "5. IF High-Priority Trigger (Score >= 40)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5. IF High-Priority Trigger (Score >= 40)": {
+      "main": [
+        [
+          {
+            "node": "5B. Slack Alert: High-Intent Domain",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "6. Log All Enriched Domains to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "6. Log All Enriched Domains to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "30000000-0000-4000-8000-000000000003",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    {
+      "name": "B2B-Enrichment"
+    },
+    {
+      "name": "DMARC-SPF-Security"
+    },
+    {
+      "name": "Apify"
+    }
+  ]
+}

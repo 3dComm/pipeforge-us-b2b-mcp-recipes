@@ -1,0 +1,211 @@
+{
+  "name": "Daily Austin & NYC $75K+ Commercial Building Permits with 100% GC Phone to Google Sheets",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🏗️ Austin ($75K–$60M) & NYC DOB (Major NB/A1) Commercial GC Permit Pipeline\n**Why 90% of building permit scrapers fail:**\nMunicipal databases in Los Angeles and Seattle redact contractor phone numbers (`NULL` phones), leaving B2B sales teams with unusable rows. This workflow runs the **US FMCSA Insurance Gap, Permits & New LLC Signal Engine** Apify Actor (`$4.50 / 1,000 verified leads` PPE), targeting only high-valuation commercial construction permits with **100% verified direct General Contractor telephone numbers**:\n- **Austin, TX (`3syk-w9eu`):** Commercial New/Remodel permits with `total_job_valuation >= $75,000` (e.g., $775K to $60M projects) and `contractor_phone IS NOT NULL`.\n- **New York City DOB (`ipu4-2q9a`):** Major New Building (`NB`) and Major Alteration Type-1 (`A1`) permits with verified licensed permittee phone numbers.\n\n### ⚙️ 60-Second Setup (Reviewer-Safe Header Auth)\n1. Create an n8n **Header Auth** credential: Header Name = `Authorization`, Value = `Bearer YOUR_APIFY_API_TOKEN`.\n2. Attach that credential to **2. Run Apify Commercial Permits Engine** and connect your Google Sheet in node **4**.",
+        "height": 340,
+        "width": 640,
+        "color": 5
+      },
+      "id": "c202b002-2222-4222-8222-000000000001",
+      "name": "Sticky Note - Commercial Permit GC Pipeline",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        180,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 7 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "c202b002-2222-4222-8222-000000000002",
+      "name": "1. Weekday 7:30AM EST Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/pipeforge~us-socrata-b2b-signal-crossjoin-engine/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"mode\": \"permits_verified_phone\",\n  \"limit\": 25,\n  \"minPermitValuationUsd\": 75000\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "c202b002-2222-4222-8222-000000000003",
+      "name": "2. Run Apify Commercial Permits Engine",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        450,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "filter-phone-present",
+              "leftValue": "={{ $json.contractor_phone }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "filter-val-or-nyc-tier",
+              "leftValue": "={{ $json.valuation_usd === 'EST_MAJOR_NB_A1' ? 100000 : Number($json.valuation_usd) }}",
+              "rightValue": 75000,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c202b002-2222-4222-8222-000000000004",
+      "name": "3. Filter Valuation >= $75K & Verified Phone",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        700,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Commercial_GC_Permits_75K_Plus",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "signal_priority": "={{ $json.signal_priority }}",
+            "source_city": "={{ $json.source_city }}",
+            "permit_id": "={{ $json.permit_id }}",
+            "issue_date": "={{ $json.issue_date }}",
+            "permit_category": "={{ $json.permit_category }}",
+            "contractor_company": "={{ $json.contractor_company }}",
+            "contractor_contact": "={{ $json.contractor_contact }}",
+            "contractor_phone": "={{ $json.contractor_phone }}",
+            "license_or_trade": "={{ $json.license_or_trade }}",
+            "project_address": "={{ $json.project_address }}",
+            "city_or_borough": "={{ $json.city_or_borough }}",
+            "state": "={{ $json.state }}",
+            "zip_code": "={{ $json.zip_code }}",
+            "valuation_usd": "={{ $json.valuation_usd }}",
+            "valuation_source": "={{ $json.valuation_source }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "c202b002-2222-4222-8222-000000000005",
+      "name": "4. Append Verified GC Leads to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        960,
+        480
+      ]
+    }
+  ],
+  "connections": {
+    "1. Weekday 7:30AM EST Trigger": {
+      "main": [
+        [
+          {
+            "node": "2. Run Apify Commercial Permits Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Run Apify Commercial Permits Engine": {
+      "main": [
+        [
+          {
+            "node": "3. Filter Valuation >= $75K & Verified Phone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Filter Valuation >= $75K & Verified Phone": {
+      "main": [
+        [
+          {
+            "node": "4. Append Verified GC Leads to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "20000000-0000-4000-8000-000000000002",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    {
+      "name": "Building-Permits"
+    },
+    {
+      "name": "General-Contractors"
+    },
+    {
+      "name": "Apify"
+    }
+  ]
+}

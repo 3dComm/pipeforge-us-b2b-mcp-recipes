@@ -1,0 +1,263 @@
+{
+  "name": "Track Newly Funded US Startups & CEO Phones from SEC Form D to Slack and Google Sheets",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🚀 US SEC Form D Newly Funded Startups & CEO Direct Phone Alert\n**Why this beats Crunchbase / Apollo alerts:**\nStartups legally file **SEC Form D** within 15 days of first capital close — often weeks before PR announcements. Over **76% of raw Form D filings are Pooled Investment Funds, REITs, or SPVs**. This workflow calls PipeForge's zero-proxy **US SEC Form D Startup Funding Engine** (`$4.50 / 1,000 verified startups`), automatically strips out financial funds, and routes `$1M+` operating startups with CEO/Executive direct US phones to Slack + Google Sheets.",
+        "height": 260,
+        "width": 540,
+        "color": 4
+      },
+      "id": "sec-note-overview-0001",
+      "name": "Sticky Note - Workflow Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        160,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### ⚙️ 60-Second Setup (Header Auth)\n1. Create a **Header Auth** credential in n8n:\n   - Header Name: `Authorization`\n   - Value: `Bearer YOUR_APIFY_API_TOKEN`\n2. Attach it to **Fetch Live SEC Form D Startups**.\n3. Connect **Google Sheets** (`YOUR_GOOGLE_SHEET_ID`) and **Slack** (`YOUR_SLACK_CHANNEL_ID`).\n4. Adjust `minAmountSoldUsd` (`1000000` = `$1M+`) or `states` (`[\"CA\",\"NY\",\"TX\"]`) inside the HTTP Request JSON body.",
+        "height": 260,
+        "width": 440,
+        "color": 5
+      },
+      "id": "sec-note-setup-0002",
+      "name": "Sticky Note - Setup Instructions",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        740,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 🎯 High-Signal Routing\n- **TRUE branch (`>= $1,000,000` raised):** Sends instant executive Slack alert + logs to Google Sheets.\n- **FALSE branch (`< $1,000,000` raised):** Quietly logs early-stage raises to Google Sheets for Clay/CRM enrichment.",
+        "height": 180,
+        "width": 420,
+        "color": 6
+      },
+      "id": "sec-note-routing-0003",
+      "name": "Sticky Note - Routing Logic",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        880,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "sec-node-trigger-0001",
+      "name": "Weekday 8AM EST Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        180,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/pipeforge~us-sec-form-d-startup-funding-leads/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"limit\": 25,\n  \"lookbackDays\": 14,\n  \"minAmountSoldUsd\": 0,\n  \"excludeFundsAndRealEstate\": true,\n  \"states\": [],\n  \"maxXmlScans\": 100\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "sec-node-apify-0002",
+      "name": "Fetch Live SEC Form D Startups",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-1m-plus-raise",
+              "leftValue": "={{ Number($json.total_amount_sold_usd || 0) }}",
+              "rightValue": 1000000,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "sec-node-if-0003",
+      "name": "Filter $1M+ Operating Startups",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        700,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "YOUR_SLACK_CHANNEL_ID",
+          "mode": "id"
+        },
+        "text": "=:moneybag: *NEW $1M+ SEC FORM D STARTUP FUNDED*\n*Company:* {{ $json.entity_name }} ({{ $json.industry_group }})\n*Amount Sold:* `${{ $json.total_amount_sold_usd }}` / Offering `${{ $json.total_offering_usd }}`\n*Executive:* {{ $json.executive_name }} ({{ $json.executive_roles }})\n*Direct US Phone:* `{{ $json.phone_formatted }}`\n*HQ:* {{ $json.city }}, {{ $json.state }} {{ $json.zip_code }} | *Filed:* {{ $json.filing_date }}\n*SEC Filing:* {{ $json.sec_xml_url }}",
+        "otherOptions": {}
+      },
+      "id": "sec-node-slack-0004",
+      "name": "Send High-Value Startup Slack Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        980,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "SEC_Form_D_Startups",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "signal_priority": "={{ $json.signal_priority }}",
+            "filing_date": "={{ $json.filing_date }}",
+            "entity_name": "={{ $json.entity_name }}",
+            "industry_group": "={{ $json.industry_group }}",
+            "total_amount_sold_usd": "={{ $json.total_amount_sold_usd }}",
+            "total_offering_usd": "={{ $json.total_offering_usd }}",
+            "executive_name": "={{ $json.executive_name }}",
+            "executive_roles": "={{ $json.executive_roles }}",
+            "phone_formatted": "={{ $json.phone_formatted }}",
+            "city": "={{ $json.city }}",
+            "state": "={{ $json.state }}",
+            "sec_xml_url": "={{ $json.sec_xml_url }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "sec-node-sheets-0005",
+      "name": "Log All Verified Startups to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        980,
+        520
+      ]
+    }
+  ],
+  "connections": {
+    "Weekday 8AM EST Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Live SEC Form D Startups",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Live SEC Form D Startups": {
+      "main": [
+        [
+          {
+            "node": "Filter $1M+ Operating Startups",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter $1M+ Operating Startups": {
+      "main": [
+        [
+          {
+            "node": "Send High-Value Startup Slack Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log All Verified Startups to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log All Verified Startups to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a7f3c8e2-4b19-4d8a-9c3e-7f2a8b4d1e9a",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    {
+      "name": "SEC-Form-D"
+    },
+    {
+      "name": "Startup-Leads"
+    },
+    {
+      "name": "Apify"
+    }
+  ]
+}

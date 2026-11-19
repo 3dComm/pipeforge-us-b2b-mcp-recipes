@@ -1,0 +1,264 @@
+{
+  "name": "Alert Slack & Google Sheets on Newly Opened US Dental & Medical Clinic Owners (CMS NPI-2)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🦷 Newly Opened US Dental & Medical Clinic Owner Phone Engine (CMS NPI-2)\n**Why agencies love NPI-2 over Google Maps scrapers:**\nGoogle Maps gives you the receptionist desk phone. The federal **CMS NPPES NPI-2 Registry** legally requires every new corporate clinic to register its **Authorized Official (Owner / President / Managing Partner)** and their **direct phone number**.\nThis workflow calls PipeForge's zero-proxy **CMS NPI-2 Clinic Owner Engine** (`$3.50 / 1,000 clinics`), sorts newest-first (2024–2026 openings), deduplicates multi-location DSOs by owner phone, and routes newly opened practices to Slack + Google Sheets.",
+        "height": 260,
+        "width": 560,
+        "color": 4
+      },
+      "id": "npi-note-overview-0001",
+      "name": "Sticky Note - Workflow Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        160,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### ⚙️ 60-Second Setup (Header Auth)\n1. Create a **Header Auth** credential in n8n:\n   - Header Name: `Authorization`\n   - Value: `Bearer YOUR_APIFY_API_TOKEN`\n2. Attach it to **Fetch Newly Opened CMS NPI-2 Clinics**.\n3. Connect **Google Sheets** (`YOUR_GOOGLE_SHEET_ID`) and **Slack** (`YOUR_SLACK_CHANNEL_ID`).\n4. Customize `states` (`[\"TX\", \"FL\", \"CA\"]`) and `taxonomyDescriptions` (`[\"Dentist\", \"Dermatology\", \"Chiropractor\"]`).",
+        "height": 260,
+        "width": 440,
+        "color": 5
+      },
+      "id": "npi-note-setup-0002",
+      "name": "Sticky Note - Setup Instructions",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        760,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 🎯 Fresh Opening Detection\n- **TRUE branch (`NEW_CLINIC`):** Newly opened practices (2025–2026) trigger an immediate Slack alert for medical/dental marketing agencies, EHR/VoIP reps, or equipment brokers.\n- **FALSE branch:** Established clinics still log cleanly into Google Sheets with Authorized Official contact info.",
+        "height": 180,
+        "width": 440,
+        "color": 6
+      },
+      "id": "npi-note-routing-0003",
+      "name": "Sticky Note - Routing Logic",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        880,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "npi-node-trigger-0001",
+      "name": "Weekly Monday 9AM EST Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        180,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/pipeforge~us-cms-npi2-clinic-owner-phone-leads/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"states\": [\"TX\", \"FL\"],\n  \"taxonomyDescriptions\": [\"Dentist\", \"Dermatology\"],\n  \"city\": \"\",\n  \"limit\": 25,\n  \"minEnumerationYear\": 2024,\n  \"deduplicateByPhone\": true,\n  \"maxPagesPerQuery\": 3\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "npi-node-apify-0002",
+      "name": "Fetch Newly Opened CMS NPI-2 Clinics",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-new-clinic-opening",
+              "leftValue": "={{ $json.signal_priority }}",
+              "rightValue": "NEW",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "npi-node-if-0003",
+      "name": "Filter Newly Opened Clinics",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        700,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "YOUR_SLACK_CHANNEL_ID",
+          "mode": "id"
+        },
+        "text": "=:hospital: *NEWLY OPENED US CLINIC DETECTED ({{ $json.signal_priority }})*\n*Clinic:* {{ $json.organization_name }} (`NPI-2: {{ $json.npi_number }}`)\n*Specialty:* {{ $json.primary_taxonomy }} | *Opened:* {{ $json.enumeration_date }}\n*Authorized Official (Owner):* {{ $json.official_full_name }} ({{ $json.official_title }})\n*Owner Direct Phone:* `{{ $json.official_direct_phone }}` | *Front Desk:* `{{ $json.practice_phone }}`\n*Location:* {{ $json.street_address }}, {{ $json.city }}, {{ $json.state }} {{ $json.zip_code }}\n*Registry:* {{ $json.npi_registry_url }}",
+        "otherOptions": {}
+      },
+      "id": "npi-node-slack-0004",
+      "name": "Alert Sales Team on Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        980,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "CMS_NPI2_Clinic_Owners",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "signal_priority": "={{ $json.signal_priority }}",
+            "npi_number": "={{ $json.npi_number }}",
+            "organization_name": "={{ $json.organization_name }}",
+            "dba_other_name": "={{ $json.dba_other_name }}",
+            "primary_taxonomy": "={{ $json.primary_taxonomy }}",
+            "enumeration_date": "={{ $json.enumeration_date }}",
+            "official_full_name": "={{ $json.official_full_name }}",
+            "official_title": "={{ $json.official_title }}",
+            "official_direct_phone": "={{ $json.official_direct_phone }}",
+            "practice_phone": "={{ $json.practice_phone }}",
+            "city": "={{ $json.city }}",
+            "state": "={{ $json.state }}",
+            "npi_registry_url": "={{ $json.npi_registry_url }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "npi-node-sheets-0005",
+      "name": "Log All Verified Clinic Owners to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        980,
+        520
+      ]
+    }
+  ],
+  "connections": {
+    "Weekly Monday 9AM EST Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Newly Opened CMS NPI-2 Clinics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Newly Opened CMS NPI-2 Clinics": {
+      "main": [
+        [
+          {
+            "node": "Filter Newly Opened Clinics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Newly Opened Clinics": {
+      "main": [
+        [
+          {
+            "node": "Alert Sales Team on Slack",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log All Verified Clinic Owners to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log All Verified Clinic Owners to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b9e4d1a6-7c28-4f3b-8a5d-6e1c9f3a2b7c",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    {
+      "name": "Healthcare-Leads"
+    },
+    {
+      "name": "Dental-Marketing"
+    },
+    {
+      "name": "Apify"
+    }
+  ]
+}
