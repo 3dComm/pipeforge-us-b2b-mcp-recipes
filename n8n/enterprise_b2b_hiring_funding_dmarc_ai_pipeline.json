@@ -51,7 +51,7 @@
         "width": 440,
         "height": 340,
         "color": 5,
-        "content": "## Setup Requirements\n\n- **Header Auth Credential (`Apify Bearer`):** Create one Generic Header Auth credential (`Name: Authorization`, `Value: Bearer YOUR_APIFY_TOKEN`) and attach it to all 3 PipeForge HTTP Request nodes.\n- **Google Sheets:** Replace `YOUR_GOOGLE_SHEET_ID` in both Sheets nodes (`Processed_Domains` and `Verified_Audits`). Leave `Continue On Fail` enabled on the read node so an empty first-run sheet does not halt execution.\n- **OpenAI + Gmail + Slack:** Connect OpenAI API credentials on `OpenAI Chat Model`, Gmail OAuth2 on `Save Outreach as Gmail Draft` (creates reviewable drafts—no auto-blasting), and Slack credentials + `YOUR_SLACK_CHANNEL_ID`."
+        "content": "## Setup Requirements\n\n- **Header Auth Credential (`Apify Bearer`):** Create one Generic Header Auth credential (`Name: Authorization`, `Value: Bearer YOUR_APIFY_TOKEN`) and attach it to all 3 Apify HTTP Request nodes.\n- **Google Sheets:** Replace `YOUR_GOOGLE_SHEET_ID` in both Sheets nodes (using the `Processed_Domains` tab so logged audits automatically populate the deduplication ledger for subsequent runs). Leave `Continue On Fail` enabled on the read node so an empty first-run sheet does not halt execution.\n- **OpenAI + Gmail + Slack:** Connect OpenAI API credentials on `OpenAI Chat Model`, Gmail OAuth2 on `Save Outreach as Gmail Draft` (creates reviewable drafts—no auto-blasting), and Slack credentials + `YOUR_SLACK_CHANNEL_ID`."
       }
     },
     {
@@ -67,7 +67,7 @@
         "width": 520,
         "height": 300,
         "color": 7,
-        "content": "## Deduplication & Zero-Browser Audit\n\nMerges hiring-intent and funding signals, removes any domain already logged in `Processed_Domains`, and audits only net-new live domains at `$3.50/1K` (`256 MB`, zero residential proxies)."
+        "content": "## Deduplication & Zero-Browser Audit\n\nMerges hiring-intent and funding signals, removes any domain already logged in `Processed_Domains`, and audits only net-new live domains via Google DoH + port-443 TLS handshake (`256 MB` RAM, zero residential proxies)."
       }
     },
     {
