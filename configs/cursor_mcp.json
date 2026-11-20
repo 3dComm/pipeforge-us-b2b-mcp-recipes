@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "pipeforge-us-b2b": {
-      "url": "https://mcp.apify.com/?tools=pipeforge/us-socrata-b2b-signal-crossjoin-engine,pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger,pipeforge/us-sec-form-d-startup-funding-leads,pipeforge/us-cms-npi2-clinic-owner-phone-leads",
+      "url": "https://mcp.apify.com/?tools=pipeforge/us-socrata-b2b-signal-crossjoin-engine,pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger,pipeforge/us-sec-form-d-startup-funding-leads,pipeforge/us-cms-npi2-clinic-owner-phone-leads,pipeforge/us-federal-contract-awards-expiring-incumbents",
       "headers": {
         "Authorization": "Bearer YOUR_APIFY_API_TOKEN"
       }

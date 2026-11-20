@@ -1,10 +1,10 @@
-# 30-Second Clay.com HTTP API Column Recipes (All 4 PipeForge Actors)
+# 30-Second Clay.com HTTP API Column Recipes (All 6 PipeForge Actors + 2-Column Waterfall)
 
 Use Clay's native **HTTP API** enrichment column (`POST`, Header `Authorization: Bearer YOUR_APIFY_API_TOKEN`, `Content-Type: application/json`) to run any PipeForge engine directly inside your Clay table with **$0 proxy cost**.
 
 ---
 
-## 1. Domain Tech-Stack, SPF/DMARC/MX & SSL Trigger (`$3.50 / 1K`)
+## 1. Domain Tech-Stack, SPF/DMARC/MX & SSL Trigger (`$3.50 / 1K`, LIVE)
 - **Endpoint:** `https://api.apify.com/v2/acts/pipeforge~b2b-domain-tech-stack-dns-ssl-sales-trigger/run-sync-get-dataset-items`
 - **Body:**
 ```json
@@ -15,7 +15,7 @@ Use Clay's native **HTTP API** enrichment column (`POST`, Header `Authorization:
   "minSeverityScore": 0
 }
 ```
-- **Best Clay Columns to Extract:** `email_provider`, `has_seg_gateway`, `dmarc_policy`, `ssl_days_remaining`, `opportunity_score`, `sales_trigger_hook`.
+- **Best Clay Columns to Extract:** `cold_email_mx_provider`, `dmarc_policy`, `spf_strictness`, `ssl_days_remaining`, `detected_tech_stack`, `severity_score`, `msp_security_hook`, `ecom_agency_hook`.
 
 ---
 
@@ -72,3 +72,43 @@ Use Clay's native **HTTP API** enrichment column (`POST`, Header `Authorization:
   "minPermitValuationUsd": 75000
 }
 ```
+
+---
+
+## 5. US Federal Contract Awards & Expiring Incumbents (`$4.50 / 1K`, LIVE)
+- **Endpoint:** `https://api.apify.com/v2/acts/pipeforge~us-federal-contract-awards-expiring-incumbents/run-sync-get-dataset-items`
+- **Body:**
+```json
+{
+  "mode": "expiring_incumbents",
+  "minAwardAmount": 250000,
+  "naicsPrefixes": ["54", "51"],
+  "minDaysUntilExpiry": 30,
+  "maxDaysUntilExpiry": 180,
+  "limit": 25
+}
+```
+- **Best Clay Columns to Extract:** `award_id`, `recipient_name`, `recipient_uei`, `award_amount_usd`, `end_date`, `days_until_expiration`, `recompete_urgency_tier`, `awarding_agency`, `naics_code`, `place_of_performance_state`, `sales_pitch_hook`, `usaspending_award_url`.
+
+---
+
+## 6. US ATS Hiring-Intent Sales Triggers (`$4.00 / 1K`, Greenhouse/Lever/Ashby — unlocking in `v1.1.0`)
+- **Endpoint:** `https://api.apify.com/v2/acts/pipeforge~us-ats-hiring-intent-sales-triggers/run-sync-get-dataset-items`
+- **Body:**
+```json
+{
+  "platforms": ["greenhouse", "lever", "ashby"],
+  "intentCategories": ["SECURITY_COMPLIANCE_URGENCY", "REVOPS_GTM_STACK_BUYER"],
+  "maxPostingAgeDays": 30,
+  "maxCompanies": 15,
+  "limit": 25
+}
+```
+- **Best Clay Columns to Extract:** `company_name`, `company_slug`, `ats_platform`, `job_title`, `intent_category`, `matched_keywords`, `is_executive_hire`, `salary_band`, `sales_pitch_hook`, `job_url`.
+
+---
+
+## 7. Clay 2-Column Waterfall (`Signal Actor -> Actor #2 Domain DNS/DMARC Audit`)
+1. **Column 1 (Trigger Source):** Pull fresh target accounts from **SEC Form D**, **USAspending GovCon**, **Commercial Permits**, or **ATS Hiring-Intent** (`run-sync-get-dataset-items`) and resolve each company's root domain into `{{Company Domain}}`.
+2. **Column 2 (Domain Security & Tech Audit):** Add an HTTP API enrichment calling **`b2b-domain-tech-stack-dns-ssl-sales-trigger`** with `{"domains": ["{{Company Domain}}"], "maxConcurrency": 5, "timeoutSeconds": 6, "minSeverityScore": 0}`.
+3. **Output Ready for Sequencer:** Map `cold_email_mx_provider`, `dmarc_policy`, `ssl_days_remaining`, and `msp_security_hook` directly into Smartlead, Instantly, or HubSpot custom variables with **$0 proxy cost**.

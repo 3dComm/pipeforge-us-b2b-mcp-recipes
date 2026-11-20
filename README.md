@@ -22,6 +22,8 @@ Most B2B scrapers burn residential proxies, break when DOM selectors change, or 
 | 4 | **[US CMS NPI-2 Dental & Medical Clinic Owner Phone Engine](https://apify.com/pipeforge/us-cms-npi2-clinic-owner-phone-leads)** | Federal CMS NPPES NPI-2 Registry | Corporate clinics sorted newest-first (2024–2026 openings), deduplicated by phone, with **Authorized Official (Owner/President) Direct Phone** | `$3.50 / 1K` |
 | 5 | **[US Federal Contract Awards & Expiring Incumbents](https://apify.com/pipeforge/us-federal-contract-awards-expiring-incumbents)** | US Treasury `USAspending.gov` v2 API | `$250K–$50M+` prime federal contracts expiring in `30–365` days (re-compete incumbent triggers) & fresh prime awards with **100% Recipient UEI + NAICS/PSC** | `$4.50 / 1K` |
 
+> **Quick-Start Tip (Actor #1):** For a single clean 100%-filled table without mixing feeds, launch the pre-configured **[FMCSA `$0` BIPD Task](https://apify.com/pipeforge/us-socrata-b2b-signal-crossjoin-engine/examples/us-fmcsa-critical-0-bipd-trucking-leads)** or **[Austin/NYC `$75K+` Commercial Permits Task](https://apify.com/pipeforge/us-socrata-b2b-signal-crossjoin-engine/examples/austin-nyc-75k-commercial-gc-building-permits)** directly instead of `mode="all"`.
+
 ---
 
 ## 1-Click MCP Server Setup
@@ -30,6 +32,11 @@ All 5 live engines are exposed through a single hosted Apify MCP endpoint (publi
 
 ```text
 https://mcp.apify.com/?tools=pipeforge/us-socrata-b2b-signal-crossjoin-engine,pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger,pipeforge/us-sec-form-d-startup-funding-leads,pipeforge/us-cms-npi2-clinic-owner-phone-leads,pipeforge/us-federal-contract-awards-expiring-incumbents
+```
+
+### Claude Code CLI (1-Line Install)
+```bash
+claude mcp add --transport http pipeforge "https://mcp.apify.com/?tools=pipeforge/us-socrata-b2b-signal-crossjoin-engine,pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger,pipeforge/us-sec-form-d-startup-funding-leads,pipeforge/us-cms-npi2-clinic-owner-phone-leads,pipeforge/us-federal-contract-awards-expiring-incumbents" --header "Authorization: Bearer YOUR_APIFY_API_TOKEN"
 ```
 
 ### Claude Desktop (`claude_desktop_config.json`)
@@ -92,14 +99,17 @@ Inspect real structured schemas pulled directly from live US federal endpoints (
 
 ## Included Automation Recipes
 
-- **Clay.com HTTP API Columns (30-Second Setup):** [`clay/clay_http_api_recipes.md`](./clay/clay_http_api_recipes.md)
-- **n8n Production Workflows (Header Auth, Reviewer-Safe JSON):**
-  - `govcon_expiring_incumbents_and_sec_formd_radar.json` — Dual-signal radar: USAspending Re-Competes + `$1M+` SEC Form D Startups
-  - `fmcsa_insurance_gap_alert.json` — Daily DOT `$0` BIPD insurance-gap Slack + Sheets alert
-  - `b2b_domain_trigger_msp_sales_alert.json` — Bulk DMARC/MX/SSL audit for MSPs & agencies
-  - `us_b2b_signal_to_domain_audit_killer_chain.json` — 2-Actor chain: US Permits -> Domain Security Scoring
-  - `sec_form_d_funded_startups_slack_sheets.json` — Daily `$1M+` SEC Form D Funded Startup + CEO Phone alert
-  - `cms_npi2_new_dental_clinics_slack_sheets.json` — Weekly Newly Opened Dental/Medical Clinic Owner alert
+- **Clay.com HTTP API Columns (All 6 Actors + 2-Column Waterfall):** [`clay/clay_http_api_recipes.md`](./clay/clay_http_api_recipes.md)
+- **Featured Dual-Actor n8n Chains (Header Auth, Reviewer-Safe JSON):**
+  - [`us_b2b_signal_to_domain_audit_killer_chain.json`](./n8n/us_b2b_signal_to_domain_audit_killer_chain.json) — 2-Actor chain: US Commercial Permits -> Domain Security Scoring
+  - [`govcon_expiring_incumbents_and_sec_formd_radar.json`](./n8n/govcon_expiring_incumbents_and_sec_formd_radar.json) — Dual-signal radar: USAspending Re-Competes + `$1M+` SEC Form D Startups
+  - [`ats_hiring_intent_to_dmarc_audit_pipeline.json`](./n8n/ats_hiring_intent_to_dmarc_audit_pipeline.json) — 2-Actor chain: ATS Hiring-Intent -> Domain DMARC/SSL Audit *(v1.1.0 — ATS unlocks tonight)*
+- **Single-Vertical n8n Production Workflows (5 Templates):**
+  - [`fmcsa_insurance_gap_alert.json`](./n8n/fmcsa_insurance_gap_alert.json) — Daily DOT `$0` BIPD insurance-gap Slack + Sheets alert
+  - [`austin_nyc_permits_to_sheets.json`](./n8n/austin_nyc_permits_to_sheets.json) — Austin & NYC `$75K+` phone-verified commercial permit GCs to Google Sheets
+  - [`b2b_domain_trigger_msp_sales_alert.json`](./n8n/b2b_domain_trigger_msp_sales_alert.json) — Bulk DMARC/MX/SSL audit for MSPs & agencies
+  - [`sec_form_d_funded_startups_slack_sheets.json`](./n8n/sec_form_d_funded_startups_slack_sheets.json) — Daily `$1M+` SEC Form D Funded Startup + CEO Phone alert
+  - [`cms_npi2_new_dental_clinics_slack_sheets.json`](./n8n/cms_npi2_new_dental_clinics_slack_sheets.json) — Weekly Newly Opened Dental/Medical Clinic Owner alert
 
 ---
 

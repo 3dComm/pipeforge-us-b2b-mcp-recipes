@@ -74,7 +74,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const domains = new Set();\nfor (const item of $input.all()) {\n  const slug = String(item.json?.company_slug || '').toLowerCase().replace(/[^a-z0-9]/g, '');\n  if (slug) domains.add(`${slug}.com`);\n}\nreturn [{ json: { domains: Array.from(domains).slice(0, 25), maxConcurrency: 5, timeoutSeconds: 6, minSeverityScore: 0 } }];"
+        "jsCode": "const DOMAIN_MAP = {\n  scaleai: 'scale.com',\n  datadog: 'datadoghq.com',\n  linear: 'linear.app',\n  elevenlabs: 'elevenlabs.io',\n  perplexity: 'perplexity.ai',\n  harvey: 'harvey.ai',\n  notion: 'notion.so',\n  ro: 'ro.co',\n  outreach: 'outreach.io',\n};\nconst domains = new Set();\nfor (const item of $input.all()) {\n  const direct = String(item.json?.company_domain || '').trim().toLowerCase();\n  if (direct) { domains.add(direct); continue; }\n  const slug = String(item.json?.company_slug || '').toLowerCase().replace(/[^a-z0-9]/g, '');\n  if (slug) domains.add(DOMAIN_MAP[slug] || `${slug}.com`);\n}\nreturn [{ json: { domains: Array.from(domains).slice(0, 25), maxConcurrency: 5, timeoutSeconds: 6, minSeverityScore: 0 } }];"
       },
       "id": "ats-node-domains-d9e1",
       "name": "Build Unique Hiring Domains Batch",
@@ -127,10 +127,11 @@
           "mappingMode": "defineBelow",
           "value": {
             "domain": "={{ $json.domain }}",
-            "mx_provider": "={{ $json.mx_provider }}",
+            "mx_provider": "={{ $json.cold_email_mx_provider || $json.mx_provider }}",
             "dmarc_policy": "={{ $json.dmarc_policy }}",
             "ssl_days_remaining": "={{ $json.ssl_days_remaining }}",
-            "severity_score": "={{ $json.severity_score }}"
+            "severity_score": "={{ $json.severity_score }}",
+            "msp_security_hook": "={{ $json.msp_security_hook }}"
           }
         },
         "options": {}
