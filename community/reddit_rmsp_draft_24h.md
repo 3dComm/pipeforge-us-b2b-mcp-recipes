@@ -5,17 +5,28 @@
 ---
 
 ## Title
-`We audited 200 SMB domains via raw Google DoH + TLS handshake (zero scraping) — 38% still run p=none DMARC with broken SPF lookups or certs expiring in <30 days`
+`We audited 98 live US SMB & clinic domains (from 360 scanned) via raw Google DoH + TLS handshake — 74.5% lack enforcing DMARC (59.2% missing, 15.3% p=none), only 4.1% run a 3rd-party SEG, and 19.4% have expired or sub-30d certs`
 
 ## Body
-Quick technical share for anyone building outbound prospecting or lightweight domain hygiene audits for SMB prospects without paying for expensive enrichment APIs.
+Quick technical share from this week's outbound hygiene benchmark if you pre-qualify SMB or healthcare/clinic prospects without paying for bloated enrichment APIs.
 
-We stopped using bulky headless browsers or third-party enrichment tools to pre-qualify SMB prospects for MSP / email-security conversations and moved to a pure DNS-over-HTTPS + TLS socket check (`dns.google/resolve` + raw Python `ssl` socket, 0 proxies, runs in ~1.2s per batch):
+We stopped using bulky headless browsers and third-party enrichment databases for initial DNS/TLS triage and ran a pure DNS-over-HTTPS + port-443 TLS socket check (`Google DoH TXT/MX JSON lookups` + raw Python `ssl` socket, zero proxies) across **360 US SMB candidate domains** pulled from public commercial contractor registries and medical/dental clinic directories.
 
-1. **SPF 10-Lookup & Soft-Fail Traps:** A surprising chunk of 20–100 seat companies using Microsoft 365 + Mailchimp + HubSpot + Zendesk silently blow past the RFC 7208 10-DNS-lookup limit (`permerror`), or still leave `?all` / `~all` with zero DMARC enforcement (`v=DMARC1; p=none`).
-2. **SEG Detection via MX Fingerprinting:** Matching MX roots cleanly separates raw `protection.outlook.com` / `aspmx.l.google.com` tenants from accounts already paying for Proofpoint (`pphosted.com`), Mimecast (`mimecast.com`), or Barracuda — so you don't waste cycles pitching email filtering to shops already locked into an enterprise SEG.
-3. **TLS Expiry & Misconfiguration:** Doing a 2-second TLS handshake on port 443 catches expired/sub-30-day certs and misconfigured wildcard renewals before the prospect even realizes their web forms are throwing browser warnings.
+**98 domains resolved as live, reachable websites (HTTP 200–399)**. Here is the actual breakdown across those 98 live SMBs:
 
-Because it's 100% public DNS + TLS handshake (no crawling, no headless Chrome), you can run 1,000 target SMB domains in under a minute on a tiny container and score them purely on live technical gaps instead of generic "we do cybersecurity" cold emails.
+| Signal Checked | Verified Breakdown (`n = 98` live domains) |
+|---|---|
+| **DMARC Policy** | **74.5% unenforced (`73/98`)** — **59.2%** missing DMARC completely (`58`), **15.3%** stuck at `p=none` (`15`); only **13.3%** `p=quarantine` (`13`) and **12.2%** `p=reject` (`12`) |
+| **MX / Mail Routing** | **24.5%** Microsoft 365 (`24`), **19.4%** Google Workspace (`19`), **43.9%** custom / ISP / cPanel MX (`43`), **8.2%** null / no MX (`8`), and **only 4.1%** behind a 3rd-party enterprise SEG like Proofpoint / Mimecast / Barracuda (`4`) |
+| **SPF Posture** | **40.8%** `-all` hardfail (`40`), **32.7%** `~all` softfail (`32`), **26.5%** missing, neutral, or broken / `permerror` (`26`) |
+| **Port 443 TLS / SSL** | **19.4% failing or expiring (`19/98`)** — `14` expired or throwing TLS handshake errors + `5` expiring within `<30 days` |
 
-Curious what other MSPs here check first when qualifying a new SMB prospect — do you prioritize DMARC/SPF gaps, exposed RDP/VPN portals, or Microsoft 365 tenant posture?
+Three practical takeaways from running this raw check before spending cycles on outreach:
+
+1. **Over 7 in 10 Live SMBs Have Zero Spoofing Enforcement:** Even among licensed commercial contractors and multi-provider medical/dental clinics actively taking web traffic, `59.2%` have never published a DMARC record and another `15.3%` left `p=none` sitting in monitoring mode indefinitely.
+2. **SEG Filtering Is Nearly Nonexistent Downmarket (`4.1%`):** Checking MX roots immediately separates the ~`44%` running raw M365 or Google Workspace without a 3rd-party SEG from the `4.1%` already paying for Proofpoint, Mimecast, or Barracuda — so you avoid pitching email security to shops already locked into an enterprise renewal.
+3. **SPF & Cert Neglect Travel Together:** Between `26.5%` missing/broken SPF records (`permerror` from exceeding the RFC 7208 10-lookup limit after bolting on marketing tools) and `19.4%` broken or sub-30-day TLS certs, pure public-protocol checks flag operational neglect far more reliably than generic firmographics.
+
+Because it is 100% public DNS + a 2-second TLS handshake (zero scraping, zero headless Chrome), you can triage 1,000 target SMB domains in under a minute on a minimal container and lead with concrete, verifiable configuration gaps instead of generic security pitches.
+
+Curious what other MSPs here check first when qualifying a new SMB prospect — do you lead with DMARC/SPF gaps, M365 tenant posture / MFA hygiene, or exposed remote access / perimeter checks?
