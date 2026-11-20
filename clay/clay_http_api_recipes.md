@@ -16,6 +16,7 @@ Use Clay's native **HTTP API** enrichment column (`POST`, Header `Authorization:
 }
 ```
 - **Best Clay Columns to Extract:** `cold_email_mx_provider`, `dmarc_policy`, `spf_strictness`, `ssl_days_remaining`, `detected_tech_stack`, `severity_score`, `msp_security_hook`, `ecom_agency_hook`.
+- **1-Domain Webhook Mode (`1 run = 1 domain`, `~3.3s`, `256 MB`, `$0` proxy):** Pass `{"domains": ["{{Domain}}"], "maxConcurrency": 1}` directly to `run-sync-get-dataset-items`, or test the 1-click zero-config Public Task: [single-domain-dmarc-techstack-webhook-enrichment](https://apify.com/pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger/examples/single-domain-dmarc-techstack-webhook-enrichment).
 
 ---
 
