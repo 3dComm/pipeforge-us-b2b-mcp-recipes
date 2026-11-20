@@ -93,7 +93,7 @@ Use Clay's native **HTTP API** enrichment column (`POST`, Header `Authorization:
 
 ---
 
-## 6. US ATS Hiring-Intent Sales Triggers (`$4.00 / 1K`, Greenhouse/Lever/Ashby — unlocking in `v1.1.0`)
+## 6. US ATS Hiring-Intent Sales Triggers (`$4.00 / 1K`, Greenhouse/Lever/Ashby, LIVE)
 - **Endpoint:** `https://api.apify.com/v2/acts/pipeforge~us-ats-hiring-intent-sales-triggers/run-sync-get-dataset-items`
 - **Body:**
 ```json
@@ -105,7 +105,7 @@ Use Clay's native **HTTP API** enrichment column (`POST`, Header `Authorization:
   "limit": 25
 }
 ```
-- **Best Clay Columns to Extract:** `company_name`, `company_slug`, `ats_platform`, `job_title`, `intent_category`, `matched_keywords`, `is_executive_hire`, `salary_band`, `sales_pitch_hook`, `job_url`.
+- **Best Clay Columns to Extract:** `company_name`, `company_slug`, `ats_platform`, `job_title`, `primary_intent`, `intent_categories`, `detected_tools`, `is_exec_budget_holder`, `salary_summary`, `intent_score`, `sales_pitch_hook`, `job_url`.
 
 ---
 

@@ -1,0 +1,790 @@
+{
+  "name": "Enterprise B2B Pipeline: ATS Hiring + $1M SEC Form D -> Dedup -> Live DMARC/MX/SSL Audit -> AI Personalized Gmail Draft + Multi-Tier Routing",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "pipeforge-enterprise-b2b-v1"
+  },
+  "tags": [
+    {
+      "name": "B2B-Lead-Generation"
+    },
+    {
+      "name": "Cybersecurity"
+    },
+    {
+      "name": "AI"
+    },
+    {
+      "name": "Apify"
+    }
+  ],
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "nodes": [
+    {
+      "id": "ent-note-01-overview",
+      "name": "Sticky Note - Architecture",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        -140
+      ],
+      "parameters": {
+        "width": 520,
+        "height": 340,
+        "color": 4,
+        "content": "## Enterprise Dual-Signal B2B Pipeline (Zero-Proxy)\n\n### What this workflow automates\n1. **Dual High-Intent Sourcing:** Pulls live **Greenhouse/Lever/Ashby** `SOC 2` & `RevOps` hiring triggers (`Apify #5`) alongside **`$1M+` SEC Form D** funded operating startups (`Apify #3`, auto-filtering ~76% fund/REIT noise).\n2. **Deduplication Gate:** Checks against `Processed_Domains` in Google Sheets so repeat domains never trigger duplicate outreach.\n3. **Live Security & Stack Audit:** Runs Google DoH (`MX / SPF / DMARC`), port-443 TLS expiry, and tech-stack detection (`Apify #2`) on verified HTTP `200–399` websites.\n4. **Urgency Routing + AI Draft:** Routes `CRITICAL`, `MEDIUM`, and `LOW` leads via Switch; generates human-reviewed **Gmail Drafts** via OpenAI + posts `CRITICAL` Slack alerts."
+      }
+    },
+    {
+      "id": "ent-note-02-setup",
+      "name": "Sticky Note - Setup Steps",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        320,
+        -140
+      ],
+      "parameters": {
+        "width": 440,
+        "height": 340,
+        "color": 5,
+        "content": "## Setup Requirements\n\n- **Header Auth Credential (`Apify Bearer`):** Create one Generic Header Auth credential (`Name: Authorization`, `Value: Bearer YOUR_APIFY_TOKEN`) and attach it to all 3 PipeForge HTTP Request nodes.\n- **Google Sheets:** Replace `YOUR_GOOGLE_SHEET_ID` in both Sheets nodes (`Processed_Domains` and `Verified_Audits`). Leave `Continue On Fail` enabled on the read node so an empty first-run sheet does not halt execution.\n- **OpenAI + Gmail + Slack:** Connect OpenAI API credentials on `OpenAI Chat Model`, Gmail OAuth2 on `Save Outreach as Gmail Draft` (creates reviewable drafts—no auto-blasting), and Slack credentials + `YOUR_SLACK_CHANNEL_ID`."
+      }
+    },
+    {
+      "id": "ent-note-03-dedup",
+      "name": "Sticky Note - Dedup & Enrichment",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        800,
+        -140
+      ],
+      "parameters": {
+        "width": 520,
+        "height": 300,
+        "color": 7,
+        "content": "## Deduplication & Zero-Browser Audit\n\nMerges hiring-intent and funding signals, removes any domain already logged in `Processed_Domains`, and audits only net-new live domains at `$3.50/1K` (`256 MB`, zero residential proxies)."
+      }
+    },
+    {
+      "id": "ent-note-04-routing",
+      "name": "Sticky Note - 3-Tier Switch & AI",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        -140
+      ],
+      "parameters": {
+        "width": 540,
+        "height": 300,
+        "color": 6,
+        "content": "## 3-Tier Routing & Safe Human-In-The-Loop AI\n\n- **CRITICAL (`severity >= 60` or `DMARC missing`):** Instant Slack alert + AI technical draft + Sheet log.\n- **MEDIUM (`severity >= 30`):** AI technical draft + Sheet log.\n- **LOW:** Logged quietly to Google Sheets for future monitoring."
+      }
+    },
+    {
+      "id": "ent-note-05-errors",
+      "name": "Sticky Note - Error Handling",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        740
+      ],
+      "parameters": {
+        "width": 440,
+        "height": 220,
+        "color": 3,
+        "content": "## Production Error Guard\n\nCaptures upstream API timeouts or credential issues via `Error Trigger` and dispatches structured alerts to Slack."
+      }
+    },
+    {
+      "id": "ent-node-01-schedule",
+      "name": "Weekday 8AM EST Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -220,
+        420
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ent-node-02-ats",
+      "name": "Pull ATS Hiring Triggers (Apify #5)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        40,
+        260
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/pipeforge~us-ats-hiring-intent-sales-triggers/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"platforms\": [\"greenhouse\", \"lever\", \"ashby\"],\n  \"intentCategories\": [\"SECURITY_COMPLIANCE_URGENCY\", \"REVOPS_GTM_STACK_BUYER\", \"NEW_BUDGET_HOLDER_EXEC\"],\n  \"maxPostingAgeDays\": 30,\n  \"maxCompanies\": 20,\n  \"limit\": 25\n}",
+        "options": {
+          "timeout": 120000
+        }
+      }
+    },
+    {
+      "id": "ent-node-03-formd",
+      "name": "Pull $1M+ SEC Form D Startups (Apify #3)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        40,
+        560
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/pipeforge~us-sec-form-d-startup-funding-leads/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"limit\": 20,\n  \"lookbackDays\": 14,\n  \"minAmountSoldUsd\": 1000000,\n  \"excludeFundsAndRealEstate\": true,\n  \"states\": [],\n  \"maxXmlScans\": 80\n}",
+        "options": {
+          "timeout": 120000
+        }
+      }
+    },
+    {
+      "id": "ent-node-04-norm-ats",
+      "name": "Normalize ATS Signals & Map Domains",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        260
+      ],
+      "parameters": {
+        "jsCode": "const DOMAIN_MAP = {\n  scaleai: 'scale.com',\n  datadog: 'datadoghq.com',\n  linear: 'linear.app',\n  elevenlabs: 'elevenlabs.io',\n  perplexity: 'perplexity.ai',\n  harvey: 'harvey.ai',\n  notion: 'notion.so',\n  ro: 'ro.co',\n  outreach: 'outreach.io',\n  vercel: 'vercel.com',\n  supabase: 'supabase.com',\n  posthog: 'posthog.com',\n  anthropic: 'anthropic.com',\n  stripe: 'stripe.com',\n  vanta: 'vanta.com',\n  ramp: 'ramp.com',\n  brex: 'brex.com',\n  figma: 'figma.com'\n};\nconst seen = new Set();\nconst out = [];\nfor (const item of $input.all()) {\n  const j = item.json || {};\n  const direct = String(j.company_domain || '').trim().toLowerCase();\n  const slug = String(j.company_slug || '').toLowerCase().replace(/[^a-z0-9]/g, '');\n  const domain = direct || (slug ? (DOMAIN_MAP[slug] || `${slug}.com`) : '');\n  if (!domain || seen.has(domain)) continue;\n  seen.add(domain);\n  out.push({\n    json: {\n      domain,\n      signal_source: 'ATS_HIRING_INTENT',\n      company_name: j.company_name || domain,\n      decision_maker: j.is_exec_budget_holder ? `Executive Hire (${j.job_title})` : 'Security / RevOps Lead',\n      signal_detail: `${j.primary_intent || 'HIRING'} - ${j.job_title || ''} (${(j.detected_tools || []).slice(0, 5).join(', ')})`,\n      salary_summary: j.salary_summary || 'Not Disclosed',\n      signal_url: j.job_url || '',\n      intent_score: Number(j.intent_score || 50)\n    }\n  });\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "ent-node-05-norm-formd",
+      "name": "Normalize Form D Signals & Derive Domains",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        560
+      ],
+      "parameters": {
+        "jsCode": "const suffixRe = /\\b(llc|inc|incorporated|corp|corporation|co|company|ltd|lp|llp|holdings|group|technologies|technology|bio|therapeutics|labs|solutions|systems|partners|ventures)\\b/gi;\nconst seen = new Set();\nconst out = [];\nfor (const item of $input.all()) {\n  const j = item.json || {};\n  const raw = String(j.entity_name || '').trim();\n  if (!raw) continue;\n  const clean = raw.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\\s+/g, ' ').trim();\n  const core = clean.replace(suffixRe, '').replace(/\\s+/g, '');\n  const compact = clean.replace(/\\s+/g, '');\n  const domain = (core.length >= 4 && core.length <= 26) ? `${core}.com` : ((compact.length >= 4 && compact.length <= 26) ? `${compact}.com` : '');\n  if (!domain || seen.has(domain)) continue;\n  seen.add(domain);\n  out.push({\n    json: {\n      domain,\n      signal_source: 'SEC_FORM_D_FUNDING',\n      company_name: raw,\n      decision_maker: `${j.executive_name || 'CEO'} (${j.executive_roles || 'Executive'})`,\n      signal_detail: `$${Number(j.total_amount_sold_usd || 0).toLocaleString()} Form D Filing (${j.industry_group || 'Operating Co'})`,\n      phone_formatted: j.phone_formatted || '',\n      signal_url: j.sec_xml_url || '',\n      intent_score: 85\n    }\n  });\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "ent-node-06-merge",
+      "name": "Merge ATS + Funding Signals",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        540,
+        360
+      ],
+      "parameters": {
+        "mode": "append"
+      }
+    },
+    {
+      "id": "ent-node-07-read-dedup",
+      "name": "Read Processed Domains (Dedup Sheet)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        540,
+        580
+      ],
+      "continueOnFail": true,
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Processed_Domains"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "ent-node-08-merge-dedup",
+      "name": "Combine Signals & History",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        760,
+        440
+      ],
+      "parameters": {
+        "mode": "append"
+      }
+    },
+    {
+      "id": "ent-node-09-dedup-batch",
+      "name": "Deduplicate & Batch New Domains",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        980,
+        440
+      ],
+      "parameters": {
+        "jsCode": "const processedSet = new Set();\nconst signals = [];\n\nfor (const item of $input.all()) {\n  const j = item.json || {};\n  if (j.domain && !j.signal_source) {\n    processedSet.add(String(j.domain).trim().toLowerCase());\n  } else if (j.domain && j.signal_source) {\n    signals.push(j);\n  }\n}\n\nconst fresh = signals.filter(s => !processedSet.has(String(s.domain).toLowerCase()));\nconst lookup = {};\nconst domains = [];\nfor (const s of fresh) {\n  const d = String(s.domain).toLowerCase();\n  if (!lookup[d]) {\n    lookup[d] = s;\n    domains.push(d);\n  }\n}\n\nif (!domains.length) {\n  return [];\n}\n\nreturn [{\n  json: {\n    domains: domains.slice(0, 35),\n    maxConcurrency: 5,\n    timeoutSeconds: 6,\n    minSeverityScore: 0,\n    _signalLookup: lookup\n  }\n}];"
+      }
+    },
+    {
+      "id": "ent-node-10-domain-audit",
+      "name": "Audit Live DMARC/MX/SSL & Stack (Apify #2)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        440
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/pipeforge~b2b-domain-tech-stack-dns-ssl-sales-trigger/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ domains: $json.domains, maxConcurrency: 5, timeoutSeconds: 6, minSeverityScore: 0 }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      }
+    },
+    {
+      "id": "ent-node-11-filter-live",
+      "name": "Filter Live Verified Websites",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        1420,
+        440
+      ],
+      "parameters": {
+        "options": {},
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "cond-http-min",
+              "leftValue": "={{ Number($json.http_status || 0) }}",
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              },
+              "rightValue": 200
+            },
+            {
+              "id": "cond-http-max",
+              "leftValue": "={{ Number($json.http_status || 999) }}",
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              },
+              "rightValue": 400
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ent-node-12-enrich-ctx",
+      "name": "Attach Upstream Context & Urgency",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1640,
+        440
+      ],
+      "parameters": {
+        "jsCode": "const lookup = $('Deduplicate & Batch New Domains').first().json._signalLookup || {};\nconst out = [];\nfor (const item of $input.all()) {\n  const j = item.json || {};\n  const d = String(j.domain || '').toLowerCase();\n  const meta = lookup[d] || {};\n  const dm = String(j.dmarc_policy || '').toLowerCase();\n  const sev = Number(j.severity_score || 0);\n  const urgency = (sev >= 60 || dm === 'missing' || dm.includes('missing'))\n    ? 'CRITICAL'\n    : (sev >= 30 ? 'MEDIUM' : 'LOW');\n  out.push({\n    json: {\n      ...j,\n      urgency_tier: urgency,\n      upstream_source: meta.signal_source || 'B2B_SIGNAL',\n      company_name: meta.company_name || j.domain,\n      decision_maker: meta.decision_maker || 'Security / IT Lead',\n      signal_detail: meta.signal_detail || '',\n      signal_url: meta.signal_url || '',\n      cold_email_mx_provider: j.cold_email_mx_provider || j.mx_provider || 'Unknown'\n    }\n  });\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "ent-node-13-switch",
+      "name": "Route by Security Urgency Tier",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1860,
+        440
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "sw-crit",
+                    "leftValue": "={{ $json.urgency_tier }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "CRITICAL"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "CRITICAL"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "sw-med",
+                    "leftValue": "={{ $json.urgency_tier }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "MEDIUM"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "MEDIUM"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "LOW"
+        }
+      }
+    },
+    {
+      "id": "ent-node-14-llm",
+      "name": "Draft Personalized Technical Outreach",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        2140,
+        320
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write a concise, non-salesy 4-sentence technical observation note to the decision maker at {{ $json.company_name }} ({{ $json.domain }}).\nContext:\n- Signal: {{ $json.upstream_source }} — {{ $json.signal_detail }}\n- Decision Maker: {{ $json.decision_maker }}\n- Mail Gateway: {{ $json.cold_email_mx_provider }}\n- DMARC Policy: {{ $json.dmarc_policy }} | SPF: {{ $json.spf_strictness }} | SSL Days Left: {{ $json.ssl_days_remaining }}\n- Tech Stack: {{ $json.detected_tech_stack }}\n- Security Finding: {{ $json.msp_security_hook }}\n\nRules: Plain text only, zero hype words, mention the exact DMARC/SPF or hiring finding in sentence 1, and ask one direct question."
+      }
+    },
+    {
+      "id": "ent-node-15-openai",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2140,
+        560
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      }
+    },
+    {
+      "id": "ent-node-16-gmail-draft",
+      "name": "Save Outreach as Gmail Draft",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2440,
+        260
+      ],
+      "parameters": {
+        "resource": "draft",
+        "operation": "create",
+        "subject": "={{ 'Quick DNS / ' + ($('Attach Upstream Context & Urgency').item.json.dmarc_policy || 'DMARC') + ' note for ' + $('Attach Upstream Context & Urgency').item.json.domain }}",
+        "message": "={{ $json.text }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "ent-node-17-slack-crit",
+      "name": "Post Critical Lead to Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        2140,
+        120
+      ],
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SLACK_CHANNEL_ID"
+        },
+        "text": "=:rotating_light: *[{{ $json.urgency_tier }}] {{ $json.company_name }} (`{{ $json.domain }}`)*\n*Signal:* {{ $json.upstream_source }} — {{ $json.signal_detail }}\n*DMARC:* `{{ $json.dmarc_policy }}` | *SPF:* `{{ $json.spf_strictness }}` | *MX:* {{ $json.cold_email_mx_provider }} | *SSL:* `{{ $json.ssl_days_remaining }}d`\n*Finding:* {{ $json.msp_security_hook }}",
+        "otherOptions": {}
+      }
+    },
+    {
+      "id": "ent-node-18-sheets-log",
+      "name": "Log Verified Audits to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2140,
+        740
+      ],
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Processed_Domains"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "domain": "={{ $json.domain }}",
+            "urgency_tier": "={{ $json.urgency_tier }}",
+            "upstream_source": "={{ $json.upstream_source }}",
+            "company_name": "={{ $json.company_name }}",
+            "decision_maker": "={{ $json.decision_maker }}",
+            "signal_detail": "={{ $json.signal_detail }}",
+            "cold_email_mx_provider": "={{ $json.cold_email_mx_provider }}",
+            "dmarc_policy": "={{ $json.dmarc_policy }}",
+            "spf_strictness": "={{ $json.spf_strictness }}",
+            "ssl_days_remaining": "={{ $json.ssl_days_remaining }}",
+            "severity_score": "={{ $json.severity_score }}",
+            "msp_security_hook": "={{ $json.msp_security_hook }}",
+            "detected_tech_stack": "={{ $json.detected_tech_stack }}"
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "ent-node-19-err-trigger",
+      "name": "Pipeline Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        820
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "ent-node-20-slack-err",
+      "name": "Post Pipeline Failure to Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        520,
+        820
+      ],
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SLACK_CHANNEL_ID"
+        },
+        "text": "=:warning: *B2B Pipeline Execution Error*\n*Workflow:* {{ $json.workflow.name }}\n*Failed Node:* {{ $json.execution.lastNodeExecuted }}\n*Error:* {{ $json.execution.error.message }}",
+        "otherOptions": {}
+      }
+    }
+  ],
+  "connections": {
+    "Weekday 8AM EST Trigger": {
+      "main": [
+        [
+          {
+            "node": "Pull ATS Hiring Triggers (Apify #5)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Pull $1M+ SEC Form D Startups (Apify #3)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Processed Domains (Dedup Sheet)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pull ATS Hiring Triggers (Apify #5)": {
+      "main": [
+        [
+          {
+            "node": "Normalize ATS Signals & Map Domains",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pull $1M+ SEC Form D Startups (Apify #3)": {
+      "main": [
+        [
+          {
+            "node": "Normalize Form D Signals & Derive Domains",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize ATS Signals & Map Domains": {
+      "main": [
+        [
+          {
+            "node": "Merge ATS + Funding Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Form D Signals & Derive Domains": {
+      "main": [
+        [
+          {
+            "node": "Merge ATS + Funding Signals",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge ATS + Funding Signals": {
+      "main": [
+        [
+          {
+            "node": "Combine Signals & History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Processed Domains (Dedup Sheet)": {
+      "main": [
+        [
+          {
+            "node": "Combine Signals & History",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Combine Signals & History": {
+      "main": [
+        [
+          {
+            "node": "Deduplicate & Batch New Domains",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deduplicate & Batch New Domains": {
+      "main": [
+        [
+          {
+            "node": "Audit Live DMARC/MX/SSL & Stack (Apify #2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audit Live DMARC/MX/SSL & Stack (Apify #2)": {
+      "main": [
+        [
+          {
+            "node": "Filter Live Verified Websites",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Live Verified Websites": {
+      "main": [
+        [
+          {
+            "node": "Attach Upstream Context & Urgency",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach Upstream Context & Urgency": {
+      "main": [
+        [
+          {
+            "node": "Route by Security Urgency Tier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Security Urgency Tier": {
+      "main": [
+        [
+          {
+            "node": "Post Critical Lead to Slack",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Draft Personalized Technical Outreach",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Verified Audits to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Draft Personalized Technical Outreach",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Verified Audits to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Verified Audits to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Draft Personalized Technical Outreach",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft Personalized Technical Outreach": {
+      "main": [
+        [
+          {
+            "node": "Save Outreach as Gmail Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pipeline Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Post Pipeline Failure to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

@@ -1,9 +1,9 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.3dComm/pipeforge-b2b-signals",
-  "title": "PipeForge US B2B Signals (FMCSA, Permits, SEC Form D, NPI-2, GovCon)",
-  "description": "Live US B2B intent signals: FMCSA, Permits, DNS/SSL, SEC Form D, CMS NPI-2, and USAspending.",
-  "version": "1.0.0",
+  "title": "PipeForge US B2B Signals (FMCSA, Permits, SEC, NPI-2, ATS, GovCon)",
+  "description": "Live US B2B intent signals: FMCSA, Permits, DNS/SSL, SEC Form D, NPI-2, ATS Hiring & USAspending.",
+  "version": "1.1.0",
   "websiteUrl": "https://apify.com/pipeforge",
   "repository": {
     "url": "https://github.com/3dComm/pipeforge-us-b2b-mcp-recipes",
@@ -12,7 +12,7 @@
   "remotes": [
     {
       "type": "streamable-http",
-      "url": "https://mcp.apify.com/?tools=pipeforge/us-socrata-b2b-signal-crossjoin-engine,pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger,pipeforge/us-sec-form-d-startup-funding-leads,pipeforge/us-cms-npi2-clinic-owner-phone-leads,pipeforge/us-federal-contract-awards-expiring-incumbents",
+      "url": "https://mcp.apify.com/?tools=pipeforge/us-socrata-b2b-signal-crossjoin-engine,pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger,pipeforge/us-sec-form-d-startup-funding-leads,pipeforge/us-cms-npi2-clinic-owner-phone-leads,pipeforge/us-ats-hiring-intent-sales-triggers,pipeforge/us-federal-contract-awards-expiring-incumbents",
       "headers": [
         {
           "name": "Authorization",

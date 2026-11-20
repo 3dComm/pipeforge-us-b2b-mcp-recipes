@@ -1,8 +1,8 @@
-# PipeForge — Zero-Proxy US B2B Outbound & Federal Signal MCP Pack (5 Live Tools, 1 Endpoint)
+# PipeForge — Zero-Proxy US B2B Outbound & Federal Signal MCP Pack (6 Live Tools, 1 Endpoint)
 
-Connect **Claude Desktop, Cursor, Windsurf, or n8n AI Agents** to 5 live US federal public-record & B2B domain intelligence engines in **15 seconds** — with **$0 proxy costs**, **256 MB RAM footprint**, and transparent Pay-Per-Event pricing (`$3.50–$4.50 / 1,000 verified records`).
+Connect **Claude Desktop, Cursor, Windsurf, or n8n AI Agents** to 6 live US federal public-record, ATS hiring-intent & B2B domain intelligence engines in **15 seconds** — with **$0 proxy costs**, **256 MB RAM footprint**, and transparent Pay-Per-Event pricing (`$3.50–$4.50 / 1,000 verified records`).
 
-[![PipeForge on Apify](https://img.shields.io/badge/Apify_Store-PipeForge_(5_Live_Actors)-00C853?style=for-the-badge)](https://apify.com/pipeforge)
+[![PipeForge on Apify](https://img.shields.io/badge/Apify_Store-PipeForge_(6_Live_Actors)-00C853?style=for-the-badge)](https://apify.com/pipeforge)
 [![Official MCP Registry](https://img.shields.io/badge/Official_MCP_Registry-io.github.3dComm%2Fpipeforge--b2b--signals-111111?style=for-the-badge)](https://registry.modelcontextprotocol.io/v0/servers?search=pipeforge)
 [![Listed on mcpservers.org](https://mcpservers.org/badge.svg)](https://mcpservers.org/servers/3dcomm/pipeforge-us-b2b-mcp-recipes)
 [![Glama MCP Connector](https://glama.ai/mcp/connectors/com.apify.mcp/pipe-forge-us-b2b-federal-and-domain-signal-engine/badges/score.svg)](https://glama.ai/mcp/connectors/com.apify.mcp/pipe-forge-us-b2b-federal-and-domain-signal-engine)
@@ -21,6 +21,7 @@ Most B2B scrapers burn residential proxies, break when DOM selectors change, or 
 | 3 | **[US SEC Form D Funded Startups & CEO Phone Engine](https://apify.com/pipeforge/us-sec-form-d-startup-funding-leads)** | Live SEC EDGAR Primary XML Form D | Newly funded operating startups (automatically strips ~76% Pooled Investment Funds/REITs/SPVs) with **CEO / Executive Name + Direct US Phone** | `$4.50 / 1K` |
 | 4 | **[US CMS NPI-2 Dental & Medical Clinic Owner Phone Engine](https://apify.com/pipeforge/us-cms-npi2-clinic-owner-phone-leads)** | Federal CMS NPPES NPI-2 Registry | Corporate clinics sorted newest-first (2024–2026 openings), deduplicated by phone, with **Authorized Official (Owner/President) Direct Phone** | `$3.50 / 1K` |
 | 5 | **[US Federal Contract Awards & Expiring Incumbents](https://apify.com/pipeforge/us-federal-contract-awards-expiring-incumbents)** | US Treasury `USAspending.gov` v2 API | `$250K–$50M+` prime federal contracts expiring in `30–365` days (re-compete incumbent triggers) & fresh prime awards with **100% Recipient UEI + NAICS/PSC** | `$4.50 / 1K` |
+| 6 | **[Greenhouse, Lever & Ashby Jobs Search API — ATS Hiring Leads](https://apify.com/pipeforge/us-ats-hiring-intent-sales-triggers)** | Official Greenhouse, Lever & Ashby public JSON boards | Live US open roles classified into **6 B2B Buying-Intent tiers** (`SOC 2`, `RevOps/Clay`, `LLM/MCP`, `Executive Budget Holders`), salary bands & ready `sales_pitch_hook` | `$4.00 / 1K` |
 
 > **Quick-Start Tip (Actor #1):** For a single clean 100%-filled table without mixing feeds, launch the pre-configured **[FMCSA `$0` BIPD Task](https://apify.com/pipeforge/us-socrata-b2b-signal-crossjoin-engine/examples/us-fmcsa-critical-0-bipd-trucking-leads)** or **[Austin/NYC `$75K+` Commercial Permits Task](https://apify.com/pipeforge/us-socrata-b2b-signal-crossjoin-engine/examples/austin-nyc-75k-commercial-gc-building-permits)** directly instead of `mode="all"`.
 
@@ -28,15 +29,15 @@ Most B2B scrapers burn residential proxies, break when DOM selectors change, or 
 
 ## 1-Click MCP Server Setup
 
-All 5 live engines are exposed through a single hosted Apify MCP endpoint (published on the Official MCP Registry as `io.github.3dComm/pipeforge-b2b-signals`):
+All 6 live engines are exposed through a single hosted Apify MCP endpoint (published on the Official MCP Registry as `io.github.3dComm/pipeforge-b2b-signals`):
 
 ```text
-https://mcp.apify.com/?tools=pipeforge/us-socrata-b2b-signal-crossjoin-engine,pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger,pipeforge/us-sec-form-d-startup-funding-leads,pipeforge/us-cms-npi2-clinic-owner-phone-leads,pipeforge/us-federal-contract-awards-expiring-incumbents
+https://mcp.apify.com/?tools=pipeforge/us-socrata-b2b-signal-crossjoin-engine,pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger,pipeforge/us-sec-form-d-startup-funding-leads,pipeforge/us-cms-npi2-clinic-owner-phone-leads,pipeforge/us-ats-hiring-intent-sales-triggers,pipeforge/us-federal-contract-awards-expiring-incumbents
 ```
 
 ### Claude Code CLI (1-Line Install)
 ```bash
-claude mcp add --transport http pipeforge "https://mcp.apify.com/?tools=pipeforge/us-socrata-b2b-signal-crossjoin-engine,pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger,pipeforge/us-sec-form-d-startup-funding-leads,pipeforge/us-cms-npi2-clinic-owner-phone-leads,pipeforge/us-federal-contract-awards-expiring-incumbents" --header "Authorization: Bearer YOUR_APIFY_API_TOKEN"
+claude mcp add --transport http pipeforge "https://mcp.apify.com/?tools=pipeforge/us-socrata-b2b-signal-crossjoin-engine,pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger,pipeforge/us-sec-form-d-startup-funding-leads,pipeforge/us-cms-npi2-clinic-owner-phone-leads,pipeforge/us-ats-hiring-intent-sales-triggers,pipeforge/us-federal-contract-awards-expiring-incumbents" --header "Authorization: Bearer YOUR_APIFY_API_TOKEN"
 ```
 
 ### Claude Desktop (`claude_desktop_config.json`)
@@ -50,7 +51,7 @@ Copy [`configs/claude_desktop_config.json`](./configs/claude_desktop_config.json
       "args": [
         "-y",
         "mcp-remote",
-        "https://mcp.apify.com/?tools=pipeforge/us-socrata-b2b-signal-crossjoin-engine,pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger,pipeforge/us-sec-form-d-startup-funding-leads,pipeforge/us-cms-npi2-clinic-owner-phone-leads,pipeforge/us-federal-contract-awards-expiring-incumbents",
+        "https://mcp.apify.com/?tools=pipeforge/us-socrata-b2b-signal-crossjoin-engine,pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger,pipeforge/us-sec-form-d-startup-funding-leads,pipeforge/us-cms-npi2-clinic-owner-phone-leads,pipeforge/us-ats-hiring-intent-sales-triggers,pipeforge/us-federal-contract-awards-expiring-incumbents",
         "--header",
         "Authorization: Bearer YOUR_APIFY_API_TOKEN"
       ]
@@ -82,7 +83,7 @@ Inspect real structured schemas pulled directly from live US federal endpoints (
 - **[SEC Form D Newly Funded Operating Startups (15-row CSV)](./sample_outputs/sec_form_d_sample_masked.csv)** — Real operating startups after filtering out ~76% Pooled Investment Funds/REITs/SPVs.
 - **[CMS NPI-2 Texas Newly Opened Dental Clinic Owners (15-row CSV)](./sample_outputs/cms_npi2_dental_tx_sample_masked.csv)** — Newest-first corporate clinics deduplicated by Authorized Official direct phone.
 
-## 10 Ready-to-Run Apify Saved Tasks
+## 13 Ready-to-Run Apify Saved Tasks
 
 - [Expiring US Federal IT & Cyber Contracts (Re-Compete Leads)](https://apify.com/pipeforge/us-federal-contract-awards-expiring-incumbents/examples/expiring-federal-it-cyber-contracts-recompete-leads)
 - [New US Federal Defense & Construction Awards ($1M+ Sub Leads)](https://apify.com/pipeforge/us-federal-contract-awards-expiring-incumbents/examples/new-federal-defense-construction-prime-contract-awards)
@@ -94,16 +95,20 @@ Inspect real structured schemas pulled directly from live US federal endpoints (
 - [Colorado & Texas New LLC & Sales Tax Direct Owners](https://apify.com/pipeforge/us-socrata-b2b-signal-crossjoin-engine/examples/colorado-texas-new-llc-sales-tax-direct-owners)
 - [B2B Cold Email MX / Proofpoint SEG & DMARC Audit](https://apify.com/pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger/examples/b2b-cold-email-mx-proofpoint-seg-dmarc-audit)
 - [MSP Cybersecurity DMARC Spoofing & SSL Expiry Audit](https://apify.com/pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger/examples/msp-cybersecurity-dmarc-spoofing-ssl-expiry-audit)
+- [Single-Domain DMARC, MX & Tech-Stack Webhook ($3.50/1K)](https://apify.com/pipeforge/b2b-domain-tech-stack-dns-ssl-sales-trigger/examples/single-domain-dmarc-techstack-webhook-enrichment)
+- [US B2B Companies Hiring SOC 2, CISO & Security Compliance](https://apify.com/pipeforge/us-ats-hiring-intent-sales-triggers/examples/b2b-companies-hiring-soc2-ciso-security-compliance-leads)
+- [US Tech Startups Hiring RevOps, Clay, Salesforce & AI Teams](https://apify.com/pipeforge/us-ats-hiring-intent-sales-triggers/examples/tech-startups-hiring-revops-clay-salesforce-ai-engineers)
 
 ---
 
 ## Included Automation Recipes
 
 - **Clay.com HTTP API Columns (All 6 Actors + 2-Column Waterfall):** [`clay/clay_http_api_recipes.md`](./clay/clay_http_api_recipes.md)
-- **Featured Dual-Actor n8n Chains (Header Auth, Reviewer-Safe JSON):**
+- **Featured Multi-Actor Enterprise & Dual n8n Chains (Header Auth, Reviewer-Safe JSON):**
+  - [`enterprise_b2b_hiring_funding_dmarc_ai_pipeline.json`](./n8n/enterprise_b2b_hiring_funding_dmarc_ai_pipeline.json) — **20-Node Enterprise Pipeline:** ATS Hiring + `$1M+` SEC Form D -> Merge -> Google Sheets Dedup -> Live DMARC/MX/SSL Audit -> 3-Tier Urgency Switch -> OpenAI Outreach Gmail Draft + Slack + Sheets + Error Trigger
   - [`us_b2b_signal_to_domain_audit_killer_chain.json`](./n8n/us_b2b_signal_to_domain_audit_killer_chain.json) — 2-Actor chain: US Commercial Permits -> Domain Security Scoring
   - [`govcon_expiring_incumbents_and_sec_formd_radar.json`](./n8n/govcon_expiring_incumbents_and_sec_formd_radar.json) — Dual-signal radar: USAspending Re-Competes + `$1M+` SEC Form D Startups
-  - [`ats_hiring_intent_to_dmarc_audit_pipeline.json`](./n8n/ats_hiring_intent_to_dmarc_audit_pipeline.json) — 2-Actor chain: ATS Hiring-Intent -> Domain DMARC/SSL Audit *(v1.1.0 — ATS unlocks tonight)*
+  - [`ats_hiring_intent_to_dmarc_audit_pipeline.json`](./n8n/ats_hiring_intent_to_dmarc_audit_pipeline.json) — 2-Actor chain: ATS Hiring-Intent -> Domain DMARC/SSL Audit *(LIVE)*
 - **Single-Vertical n8n Production Workflows (5 Templates):**
   - [`fmcsa_insurance_gap_alert.json`](./n8n/fmcsa_insurance_gap_alert.json) — Daily DOT `$0` BIPD insurance-gap Slack + Sheets alert
   - [`austin_nyc_permits_to_sheets.json`](./n8n/austin_nyc_permits_to_sheets.json) — Austin & NYC `$75K+` phone-verified commercial permit GCs to Google Sheets
